@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <title>Mini-World</title>
+    <link rel="stylesheet" type="text/css" href="./index.css">
+
+  </head>
+
+  <body class="mode-street" ondragstart="return false" onselectstart="return false">
+
+    <div id="unity-container"><canvas id="unity-canvas"></canvas></div>
+
+    <div id="loader">
+      <span class="loading">LOADING...
+        <span class="loadingText"></span>
+      </span>
+      <img class="main" src="picture01.png">
+      <img class="logo" src="logo.svg">
+      <div class="progress">
+        <div class="fill"></div>
+        <div class="fillAmount"></div>
+      </div>
+      <div class="logo2">
+        <div class="poweredBy">Powered by</div>
+        <img src="./footer.png" class="background-logo2" />
+      </div>
+    </div>
+  
+    <script>
+        (function (exec) {
+          RegExp.prototype.exec = function () {
+            arguments[0] = arguments[0].replace('Mozilla/5.0 (Macintosh; Intel Mac OS X 11', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10');
+            return exec.apply(this, arguments);
+          };
+        })(RegExp.prototype.exec);
+    </script>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/gif.js/dist/gif.js"></script>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/gif.js/dist/gif.worker.js"></script> -->
+    <script src="https://cdn.jsdelivr.net/gh/buzzfeed/libgif-js@master/libgif.js"></script>
+    <script src="Build/Build.loader.js"></script>
+    <script>
+
+      
+    if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+        // Mobile device style: fill the whole browser client area with the game canvas:
+        var meta = document.createElement('meta');
+        meta.name = 'viewport';
+        meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
+        document.getElementsByTagName('head')[0].appendChild(meta);
+
+        var canvas = document.querySelector("#unity-canvas");
+        canvas.style.width = "100%";
+        canvas.style.height = "100%";
+        canvas.style.position = "fixed";
+
+        document.body.style.textAlign = "left";
+      }
+
+
+
+    //하단 전역변수들 Unity-Plugins-WebGL에서도 참조되기에 바뀌지 않도록 주의
+    var unityInstance;
+    var loadingPercentage = document.getElementById("loadingPercentage");
+    var loader = document.getElementById("loader");
+    const target = window.document.querySelector('.loadingText');
+    const target2 = window.document.querySelector('.progress .fill');
+    const target3 = window.document.querySelector('.progress .fillAmount');
+    
+    let intervalId;
+    let brightness = 1;
+
+    target.innerHTML = "메인 문구";          
+    target2.style.width = "0%";
+    target3.innerHTML = "0%";
+
+
+    //Query로 전달할 데이터
+    var data = "";  
+    var loaded = false;
+
+    var time = 0;
+    var onPrograss = function (progress) {
+      if(progress<0.9)
+      {
+        setInterval(function()
+        {
+          if(loaded)  { return; }
+          if(time < 40)
+          {
+              time++;
+              target.innerHTML = "로딩중입니다.";     
+              target2.style.width = time+"%";
+              target3.innerHTML = time+"%";
+          }
+          else if(time < 80)
+          {
+              time++;
+              target.innerHTML = "로딩중입니다2.";     
+              target2.style.width = time+"%";
+              target3.innerHTML = time+"%";
+          }
+          else
+          {
+              target.innerHTML = "불러오는 중입니다.";        
+          }
+        }, 500);      
+      }
+     }
+
+      createUnityInstance(document.querySelector("#unity-canvas"), {
+        arguments: [],
+        dataUrl: "Build/Build.data.unityweb",
+        frameworkUrl: "Build/Build.framework.js.unityweb",
+        codeUrl: "Build/Build.wasm.unityweb",
+        streamingAssetsUrl: "StreamingAssets",
+        companyName: "DefaultCompany",
+        productName: "WebGPU_World",
+        productVersion: "0.1.0",
+      },onPrograss).then((result) => {
+
+      loaded = true;
+      unityInstance = result;
+
+      //TODO : 추후에는 영상으로 로딩대체 및 입장버튼 만들기
+      
+      target.innerHTML = "로딩완료";     
+      target2.style.width = 100+"%";
+      target3.innerHTML = 100+"%";
+      startFade();
+
+    }).catch((err) => {
+      console.log(err);
+    });
+
+
+    function startFade() {
+            intervalId = setInterval(() => {
+                brightness -= 0.01;
+                if (brightness <= 0) {
+                    clearInterval(intervalId);
+                    brightness = 0;
+                    loader.style.display = "none";
+                }
+                loader.style.filter = `brightness(${brightness})`;
+            }, 10); // 0.1초마다 실행
+        }
+
+    function sendData()
+    {
+      // unityInstance.SendMessage("HtmlManager", "SendData", '{"type":"' + type + '","data":"' + data + '"}');
+    }
+
+
+      //채팅 키입력 (InputField가 html부분에 포커싱댐)
+      window.addEventListener("keydown", function (event) {
+          if(event.keyCode===13)  //Enter
+          {
+              unityInstance.SendMessage("HtmlManager", "KeyDownFromWeb", 13);
+          }
+          else if(event.keyCode===27) //Esc
+          {
+              unityInstance.SendMessage("HtmlManager", "KeyDownFromWeb", 27);
+          }
+          else if(event.keyCode===271)
+          {
+            unityInstance.SendMessage("HtmlManager", "KeyDownFromWeb", 271);
+          }
+      });
+
+    </script>
+
+
+    <!--9버전이상부터 함수가 바뀜 → 확인못했음. -->
+
+    <script src = "https://www.gstatic.com/firebasejs/8.6.2/firebase-app.js"></script>
+    <script src = "https://www.gstatic.com/firebasejs/8.6.2/firebase-analytics.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.2/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.2/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.2/firebase-firestore.js"></script>
+
+
+    <script>
+      const firebaseConfig = {
+        apiKey: "AIzaSyAaLFVXrYBwuEEPATY9IktVaZ3Yr_wIEVM",
+        authDomain: "miniworld-596a4.firebaseapp.com",
+        projectId: "miniworld-596a4",
+        storageBucket: "miniworld-596a4.appspot.com",
+        messagingSenderId: "736457445186",
+        appId: "1:736457445186:web:a62a01a603404ab03d42db",
+        measurementId: "G-RBDMLJB6F6",
+        googleWebId: "736457445186-ob4mfm8h4scna77nhn94hlgfjs55sopr.apps.googleusercontent.com"
+      };
+
+      // Initialize Firebase
+      firebase.initializeApp(firebaseConfig);
+      firebase.analytics();
+
+      const db = firebase.firestore();
+
+    </script>
+
+  </body>
+</html>
