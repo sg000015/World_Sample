@@ -117,17 +117,17 @@
 
     //채팅 키입력 (InputField가 html부분에 포커싱댐)
     window.addEventListener("keydown", function (event) {
-      if (event.keyCode === 13)  //Enter
-      {
-        unityInstance.SendMessage("ChattingController", "InputGetKeyDownOnHtml", 13);
-      }
-      else if (event.keyCode === 27) //Esc
-      {
-        unityInstance.SendMessage("ChattingController", "InputGetKeyDownOnHtml", 27);
-      }
+        if(event.keyCode===13)  //Enter
+        {
+            unityInstance.SendMessage("HtmlManager", "KeyDownFromWeb", 13);
+        }
+        else if(event.keyCode===27) //Esc
+        {
+            unityInstance.SendMessage("HtmlManager", "KeyDownFromWeb", 27);
+        }
         else if(event.keyCode===271)
         {
-        unityInstance.SendMessage("HtmlManager", "KeyDownFromWeb", 271);
+          unityInstance.SendMessage("HtmlManager", "KeyDownFromWeb", 271);
         }
     });
 
